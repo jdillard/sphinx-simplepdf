@@ -1,8 +1,9 @@
+import importlib.util
 import os
 import re
 import subprocess
 from collections import Counter
-from typing import Any
+from typing import Any, Callable
 
 import sass
 import weasyprint
@@ -10,6 +11,7 @@ from bs4 import BeautifulSoup
 from sphinx import __version__
 from sphinx.application import Sphinx
 from sphinx.builders.singlehtml import SingleFileHTMLBuilder
+from sphinx.errors import ConfigError, ExtensionError
 from sphinx.util import logging
 
 from sphinx_simplepdf.builders.debug import DebugPython
@@ -114,7 +116,10 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         with open(index_path, encoding="utf-8") as index_file:
             index_html = "".join(index_file.readlines())
 
-        new_index_html = self._toctree_fix(index_html)
+        soup = BeautifulSoup(index_html, "html.parser")
+        soup = self._toctree_fix_soup(soup)
+        soup = self._execute_html_hook(soup)
+        new_index_html = str(soup)
 
         with open(index_path, "w", encoding="utf-8") as index_file:
             index_file.writelines(new_index_html)
@@ -169,6 +174,108 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
                     if (n == retries - 1) and not success:
                         raise RuntimeError(f"maximum number of retries {retries} failed in weasyprint")
 
+    def _load_html_hook(self) -> Callable[[BeautifulSoup, Sphinx], BeautifulSoup] | None:
+        """Load the HTML hook function from the configured path.
+
+        Returns:
+            The hook function if configured, None otherwise.
+
+        Raises:
+            ConfigError: If the hook configuration is invalid.
+        """
+        hook_path = self.config["simplepdf_html_hook"]
+        if hook_path is None:
+            return None
+
+        # Parse the path:function_name format
+        if ":" not in hook_path:
+            raise ConfigError(
+                f"simplepdf_html_hook must be in format 'path/to/script.py:function_name', "
+                f"got '{hook_path}'"
+            )
+
+        script_path, function_name = hook_path.rsplit(":", 1)
+
+        # Resolve path relative to conf.py directory
+        if not os.path.isabs(script_path):
+            script_path = os.path.join(self.app.confdir, script_path)
+
+        # Check if file exists
+        if not os.path.isfile(script_path):
+            raise ConfigError(
+                f"simplepdf_html_hook script not found: {script_path}"
+            )
+
+        # Load the module
+        spec = importlib.util.spec_from_file_location("simplepdf_hook", script_path)
+        if spec is None or spec.loader is None:
+            raise ConfigError(
+                f"Failed to load simplepdf_html_hook script: {script_path}"
+            )
+
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+        except Exception as e:
+            raise ConfigError(
+                f"Error loading simplepdf_html_hook script '{script_path}': {e}"
+            ) from e
+
+        # Get the function
+        if not hasattr(module, function_name):
+            raise ConfigError(
+                f"Function '{function_name}' not found in simplepdf_html_hook script: {script_path}"
+            )
+
+        hook_func = getattr(module, function_name)
+
+        if not callable(hook_func):
+            raise ConfigError(
+                f"simplepdf_html_hook '{function_name}' in '{script_path}' is not callable"
+            )
+
+        return hook_func
+
+    def _execute_html_hook(self, soup: BeautifulSoup) -> BeautifulSoup:
+        """Execute the user-defined HTML hook if configured.
+
+        Args:
+            soup: The BeautifulSoup object to pass to the hook.
+
+        Returns:
+            The modified BeautifulSoup object.
+
+        Raises:
+            ExtensionError: If the hook raises an exception or returns an invalid type.
+        """
+        hook_func = self._load_html_hook()
+        if hook_func is None:
+            return soup
+
+        logger.info("Executing simplepdf_html_hook")
+
+        try:
+            result = hook_func(soup, self.app)
+        except Exception as e:
+            raise ExtensionError(
+                f"simplepdf_html_hook raised an exception: {e}"
+            ) from e
+
+        if result is None:
+            logger.warning(
+                "simplepdf_html_hook returned None, using original HTML. "
+                "The hook should return a BeautifulSoup object."
+            )
+            return soup
+
+        if not isinstance(result, BeautifulSoup):
+            raise ExtensionError(
+                f"simplepdf_html_hook must return a BeautifulSoup object, "
+                f"got {type(result).__name__}"
+            )
+
+        return result
+
     """
     attempts to fix cases where a document has multiple chapters that have the same name.
 
@@ -194,9 +301,16 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
 
     """
 
-    def _toctree_fix(self, html):
+    def _toctree_fix_soup(self, soup: BeautifulSoup) -> BeautifulSoup:
+        """Fix toctree page numbering issues for documents with duplicate chapter names.
+
+        Args:
+            soup: The BeautifulSoup object with parsed HTML.
+
+        Returns:
+            The modified BeautifulSoup object.
+        """
         print("checking for potential toctree page numbering errors")
-        soup = BeautifulSoup(html, "html.parser")
         sidebar = soup.find("div", class_="sphinxsidebarwrapper")
 
         # sidebar contains the toctree
@@ -315,7 +429,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
                 heading.attrs["class"] = class_attr
 
         logger.debug(soup.prettify(formatter="html"))
-        return str(soup)
+        return soup
 
 
 def setup(app: Sphinx) -> dict[str, Any]:
@@ -330,6 +444,7 @@ def setup(app: Sphinx) -> dict[str, Any]:
     app.add_config_value("simplepdf_theme", "simplepdf_theme", "html", types=[str])
     app.add_config_value("simplepdf_theme_options", {}, "html", types=[dict])
     app.add_config_value("simplepdf_sidebars", {"**": ["localtoc.html"]}, "html", types=[dict])
+    app.add_config_value("simplepdf_html_hook", None, "html", types=[str])
     app.add_builder(SimplePdfBuilder)
 
     return {

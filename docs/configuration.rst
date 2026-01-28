@@ -191,3 +191,66 @@ To reduce output noise the output can be filtered by a list of regular expressio
 ``simplepdf_weasyprint_filter = ["WARNING: Ignored"]``
 
 To suppress all output, the quite flag `-q` should be used.
+
+simplepdf_html_hook
+-------------------
+.. versionadded:: 1.7
+
+Path to a Python script and function that will be called to manipulate the HTML before PDF generation.
+This allows custom transformations using BeautifulSoup.
+
+**Format:** ``"path/to/script.py:function_name"``
+
+The path can be absolute or relative to the ``conf.py`` directory.
+
+**Example conf.py:**
+
+.. code-block:: python
+
+   simplepdf_html_hook = "./hooks/pdf_hook.py:customize_html"
+
+**Example hook script (hooks/pdf_hook.py):**
+
+.. code-block:: python
+
+   from bs4 import BeautifulSoup
+
+   def customize_html(soup, app):
+       """
+       Customize HTML before PDF generation.
+
+       Args:
+           soup: BeautifulSoup object with parsed HTML
+           app: Sphinx application instance
+       Returns:
+           Modified BeautifulSoup object
+       """
+       # Example: Remove navigation elements
+       for nav in soup.find_all("nav"):
+           nav.decompose()
+
+       # Example: Add watermark
+       watermark = soup.new_tag("div", attrs={"class": "watermark"})
+       watermark.string = "DRAFT"
+       body = soup.find("body")
+       if body:
+           body.insert(0, watermark)
+
+       return soup
+
+**Function signature:**
+
+The hook function must accept two arguments:
+
+:soup: A ``BeautifulSoup`` object containing the parsed HTML
+:app: The Sphinx application instance (provides access to ``config``, ``srcdir``, ``outdir``, etc.)
+
+The function must return a ``BeautifulSoup`` object.
+
+**Error handling:**
+
+- If the script file is not found, a ``ConfigError`` is raised
+- If the function is not found in the script, a ``ConfigError`` is raised
+- If the hook returns ``None``, a warning is logged and the original HTML is used
+- If the hook returns a non-BeautifulSoup type, an error is raised
+- If the hook raises an exception, it is wrapped in an ``ExtensionError``
