@@ -73,6 +73,28 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             },
         )
 
+        # Compile custom SCSS file if configured
+        custom_css = self.app.config.simplepdf_custom_css
+        if custom_css:
+            custom_css_path = os.path.join(self.app.confdir, custom_css)
+            if not os.path.isfile(custom_css_path):
+                logger.warning(f"simplepdf_custom_css file not found: {custom_css_path}")
+            else:
+                logger.info("Compiling custom scss file")
+                custom_result = sass.compile(
+                    filename=custom_css_path,
+                    include_paths=[scss_folder],
+                    output_style="nested",
+                    custom_functions={
+                        sass.SassFunction("config", ("$a", "$b"), self.get_config_var),
+                        sass.SassFunction("theme_option", ("$a", "$b"), self.get_theme_option_var),
+                    },
+                )
+                custom_dest = os.path.join(css_folder, "custom.css")
+                with open(custom_dest, "w", encoding="utf-8") as f:
+                    f.write(custom_result)
+                self.app.add_css_file("custom.css")
+
     def get_config_var(self, name, default):
         """
         Gets a config variables for scss out of the Sphinx configuration.
@@ -330,6 +352,7 @@ def setup(app: Sphinx) -> dict[str, Any]:
     app.add_config_value("simplepdf_theme", "simplepdf_theme", "html", types=[str])
     app.add_config_value("simplepdf_theme_options", {}, "html", types=[dict])
     app.add_config_value("simplepdf_sidebars", {"**": ["localtoc.html"]}, "html", types=[dict])
+    app.add_config_value("simplepdf_custom_css", None, "html", types=[str])
     app.add_builder(SimplePdfBuilder)
 
     return {

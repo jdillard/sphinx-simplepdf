@@ -181,6 +181,42 @@ Additional options for the theme. The default theme ``simplepdf_theme`` inherits
 :nocover: Do not display cover pages (front and back cover)
 
 
+simplepdf_custom_css
+--------------------
+
+Path to a custom SCSS file (relative to the ``conf.py`` directory) that is compiled and loaded
+after the default styles, allowing you to add or override any styles.
+
+The file is compiled with the same SCSS engine used for the built-in styles, so the following
+are available inside the custom file:
+
+- ``config()`` and ``theme_option()`` custom functions
+- All existing partials via ``@import "variables"``, ``@import "fonts"``, etc.
+
+**Example conf.py**
+
+.. code-block:: python
+
+   simplepdf_custom_css = "custom_pdf.scss"
+
+**Example custom_pdf.scss**
+
+.. code-block:: scss
+
+   @import "variables";  // gives access to $primary, $secondary, etc.
+
+   h1 {
+     color: $secondary;
+     font-size: 36pt;
+   }
+
+   .admonition {
+     border-radius: 8px;
+     border-left: 4px solid $primary;
+   }
+
+Default: ``None`` (no custom styles)
+
 simplepdf_weasyprint_filter
 ---------------------------
 .. versionadded:: 1.6
