@@ -1,3 +1,4 @@
+import importlib
 import os
 import re
 import subprocess
@@ -55,15 +56,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         # Generate main.css
         logger.info("Generating css files from scss-templates")
         css_folder = os.path.join(self.app.outdir, "_static")
-        scss_folder = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "themes",
-            "simplepdf_theme",
-            "static",
-            "styles",
-            "sources",
-        )
+        scss_folder = self._resolve_scss_folder()
         sass.compile(
             dirname=(scss_folder, css_folder),
             output_style="nested",
@@ -104,6 +97,32 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         if name not in simplepdf_theme_options:
             return default
         return simplepdf_theme_options[name]
+
+    def _resolve_scss_folder(self):
+        """Resolve the SCSS sources folder from the configured theme package.
+
+        Tries to import the theme module specified by simplepdf_theme and use
+        its get_scss_sources_path() if available. Falls back to the bundled
+        simplepdf_theme if the external theme cannot be found.
+        """
+        theme_name = self.app.config.simplepdf_theme or "simplepdf_theme"
+        try:
+            theme_module = importlib.import_module(theme_name)
+            if hasattr(theme_module, "get_scss_sources_path"):
+                return theme_module.get_scss_sources_path()
+            return os.path.join(
+                os.path.dirname(theme_module.__file__),
+                "static", "styles", "sources",
+            )
+        except ImportError:
+            logger.info(
+                f"Could not import theme '{theme_name}', "
+                "falling back to bundled simplepdf_theme"
+            )
+            return os.path.join(
+                os.path.dirname(__file__), "..", "themes",
+                "simplepdf_theme", "static", "styles", "sources",
+            )
 
     def finish(self) -> None:
         super().finish()
