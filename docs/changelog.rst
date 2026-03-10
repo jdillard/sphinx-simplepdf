@@ -5,7 +5,7 @@ Release 1.8
 -----------
 :released: unreleased
 
-* **Bugfix**: Improve support for external theme packages by using a ``get_scss_sources_path()`` convention.
+* **Bugfix**: [#134] Improve support for external theme packages by using a ``get_scss_sources_path()`` convention.
 
   - If needed, theme warnings can be suppressed via ``suppress_warnings = ["simplepdf.theme"]``.
 
