@@ -101,28 +101,30 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
     def _resolve_scss_folder(self):
         """Resolve the SCSS sources folder from the configured theme package.
 
-        Tries to import the theme module specified by simplepdf_theme and use
-        its get_scss_sources_path() if available. Falls back to the bundled
-        simplepdf_theme if the external theme cannot be found.
+        Imports the theme module and calls its get_scss_sources_path(). Falls
+        back to the bundled simplepdf_theme if the theme cannot be imported or
+        does not define get_scss_sources_path().
         """
         theme_name = self.app.config.simplepdf_theme or "simplepdf_theme"
         try:
             theme_module = importlib.import_module(theme_name)
             if hasattr(theme_module, "get_scss_sources_path"):
                 return theme_module.get_scss_sources_path()
-            return os.path.join(
-                os.path.dirname(theme_module.__file__),
-                "static", "styles", "sources",
+            logger.warning(
+                f"Theme '{theme_name}' does not define get_scss_sources_path(), "
+                "falling back to bundled simplepdf_theme",
+                type="simplepdf",
+                subtype="theme",
             )
         except ImportError:
-            logger.info(
+            logger.warning(
                 f"Could not import theme '{theme_name}', "
-                "falling back to bundled simplepdf_theme"
+                "falling back to bundled simplepdf_theme",
+                type="simplepdf",
+                subtype="theme",
             )
-            return os.path.join(
-                os.path.dirname(__file__), "..", "themes",
-                "simplepdf_theme", "static", "styles", "sources",
-            )
+        from sphinx_simplepdf.themes.simplepdf_theme import get_scss_sources_path
+        return get_scss_sources_path()
 
     def finish(self) -> None:
         super().finish()

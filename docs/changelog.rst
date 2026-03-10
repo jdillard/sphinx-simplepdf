@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Release 1.8
+-----------
+:released: unreleased
+
+* **Bugfix**: Improve support for external theme packages by using a ``get_scss_sources_path()`` convention.
+
+  - If needed, theme warnings can be suppressed via ``suppress_warnings = ["simplepdf.theme"]``.
+
 Release 1.7
 -----------
 :released: 02.12.2025
