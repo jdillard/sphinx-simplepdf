@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Release 1.8
+-----------
+
+* **Enhancement**: Add the ability to configure an :ref:`simplepdf_html_hook` to modify the HTML before PDF generation.
+
 Release 1.7
 -----------
 :released: 02.12.2025

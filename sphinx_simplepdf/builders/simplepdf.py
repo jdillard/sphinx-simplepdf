@@ -117,7 +117,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             index_html = "".join(index_file.readlines())
 
         soup = BeautifulSoup(index_html, "html.parser")
-        soup = self._toctree_fix_soup(soup)
+        soup = self._toctree_fix(soup)
         soup = self._execute_html_hook(soup)
         new_index_html = str(soup)
 
@@ -177,6 +177,8 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
     def _load_html_hook(self) -> Callable[[BeautifulSoup, Sphinx], BeautifulSoup] | None:
         """Load the HTML hook function from the configured path.
 
+        The script must define a function named ``html_hook``.
+
         Returns:
             The hook function if configured, None otherwise.
 
@@ -187,14 +189,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         if hook_path is None:
             return None
 
-        # Parse the path:function_name format
-        if ":" not in hook_path:
-            raise ConfigError(
-                f"simplepdf_html_hook must be in format 'path/to/script.py:function_name', "
-                f"got '{hook_path}'"
-            )
-
-        script_path, function_name = hook_path.rsplit(":", 1)
+        script_path = hook_path
 
         # Resolve path relative to conf.py directory
         if not os.path.isabs(script_path):
@@ -208,11 +203,6 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
 
         # Load the module
         spec = importlib.util.spec_from_file_location("simplepdf_hook", script_path)
-        if spec is None or spec.loader is None:
-            raise ConfigError(
-                f"Failed to load simplepdf_html_hook script: {script_path}"
-            )
-
         module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(module)
@@ -221,17 +211,10 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
                 f"Error loading simplepdf_html_hook script '{script_path}': {e}"
             ) from e
 
-        # Get the function
-        if not hasattr(module, function_name):
-            raise ConfigError(
-                f"Function '{function_name}' not found in simplepdf_html_hook script: {script_path}"
-            )
-
-        hook_func = getattr(module, function_name)
-
+        hook_func = getattr(module, "html_hook", None)
         if not callable(hook_func):
             raise ConfigError(
-                f"simplepdf_html_hook '{function_name}' in '{script_path}' is not callable"
+                f"Function 'html_hook' not found or not callable in simplepdf_html_hook script: {script_path}"
             )
 
         return hook_func
@@ -301,7 +284,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
 
     """
 
-    def _toctree_fix_soup(self, soup: BeautifulSoup) -> BeautifulSoup:
+    def _toctree_fix(self, soup: BeautifulSoup) -> BeautifulSoup:
         """Fix toctree page numbering issues for documents with duplicate chapter names.
 
         Args:

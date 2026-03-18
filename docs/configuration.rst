@@ -196,10 +196,11 @@ simplepdf_html_hook
 -------------------
 .. versionadded:: 1.7
 
-Path to a Python script and function that will be called to manipulate the HTML before PDF generation.
+Path to a Python script that will be called to manipulate the HTML before PDF generation.
+The script must define a function named ``html_hook``.
 This allows custom transformations using BeautifulSoup.
 
-**Format:** ``"path/to/script.py:function_name"``
+**Format:** ``"path/to/script.py"``
 
 The path can be absolute or relative to the ``conf.py`` directory.
 
@@ -207,7 +208,7 @@ The path can be absolute or relative to the ``conf.py`` directory.
 
 .. code-block:: python
 
-   simplepdf_html_hook = "./hooks/pdf_hook.py:customize_html"
+   simplepdf_html_hook = "./hooks/pdf_hook.py"
 
 **Example hook script (hooks/pdf_hook.py):**
 
@@ -215,7 +216,7 @@ The path can be absolute or relative to the ``conf.py`` directory.
 
    from bs4 import BeautifulSoup
 
-   def customize_html(soup, app):
+   def html_hook(soup, app):
        """
        Customize HTML before PDF generation.
 
@@ -240,7 +241,7 @@ The path can be absolute or relative to the ``conf.py`` directory.
 
 **Function signature:**
 
-The hook function must accept two arguments:
+The ``html_hook`` function must accept two arguments:
 
 :soup: A ``BeautifulSoup`` object containing the parsed HTML
 :app: The Sphinx application instance (provides access to ``config``, ``srcdir``, ``outdir``, etc.)
