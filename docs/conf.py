@@ -12,7 +12,7 @@ import os
 import sphinx
 
 project = "Sphinx-SimplePDF"
-copyright = "2022, team useblocks"
+copyright = "2026, team useblocks"
 author = "team useblocks"
 
 # -- General configuration ---------------------------------------------------

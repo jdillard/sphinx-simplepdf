@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(__file__))  # Needed for test_py_module
 
 # project = 'Sphinx-SimplePDF-DEMO'
 project = "Sphinx-SimplePDF-DEMO"
-copyright = "2022, team useblocks"
+copyright = "2026, team useblocks"
 author = "team useblocks"
 
 # -- General configuration ---------------------------------------------------
