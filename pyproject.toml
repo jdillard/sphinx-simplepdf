@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "sphinx-simplepdf"
-version = "1.8.0"
+version = "1.7.0"
 description = "An easy to use PDF Builder for Sphinx with a modern PDF-Theme."
 readme = "README.rst"
 license = "MIT"
