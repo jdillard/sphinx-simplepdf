@@ -107,6 +107,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         """
         theme_name = self.app.config.simplepdf_theme or "simplepdf_theme"
         try:
+            # theme_name comes from conf.py; dynamic import is no extra trust boundary vs. Sphinx config.
             theme_module = importlib.import_module(theme_name)
             if hasattr(theme_module, "get_scss_sources_path"):
                 return theme_module.get_scss_sources_path()
