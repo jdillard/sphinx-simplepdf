@@ -174,8 +174,9 @@ The value must match both the Sphinx theme name and the importable Python module
    simplepdf_theme = "my_custom_pdf_theme"
 
 The theme module must define a ``get_scss_sources_path()`` function that returns
-the absolute path to its SCSS sources directory. This is how the builder locates
-the SCSS files to compile into CSS for the PDF.
+the path to its SCSS sources directory. This is how the builder locates the SCSS
+files to compile into CSS for the PDF. Prefer returning an absolute path
+based on ``__file__`` so behavior does not depend on Sphinx's working directory.
 
 **Minimal example:**
 

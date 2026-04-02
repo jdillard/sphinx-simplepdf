@@ -10,6 +10,7 @@ import sass
 from sphinx import __version__
 from sphinx.application import Sphinx
 from sphinx.builders.singlehtml import SingleFileHTMLBuilder
+from sphinx.errors import ExtensionError
 from sphinx.util import logging
 import weasyprint
 
@@ -104,6 +105,8 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         Imports the theme module and calls its get_scss_sources_path(). Falls
         back to the bundled simplepdf_theme if the theme cannot be imported or
         does not define get_scss_sources_path(), or if calling the hook raises.
+        If the hook returns a path that is not an existing directory after
+        abspath normalization, raises ExtensionError.
         """
         theme_name = self.app.config.simplepdf_theme or "simplepdf_theme"
         fallback_module = importlib.import_module("sphinx_simplepdf.themes.simplepdf_theme")
@@ -133,7 +136,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             return bundled_scss_folder()
 
         try:
-            return theme_module.get_scss_sources_path()
+            scss_folder = theme_module.get_scss_sources_path()
         except Exception as exc:
             logger.warning(
                 f"Theme '{theme_name}' get_scss_sources_path() failed ({type(exc).__name__}: {exc!s}), "
@@ -142,6 +145,14 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
                 subtype="theme",
             )
             return bundled_scss_folder()
+
+        scss_folder = os.path.abspath(scss_folder)
+        if not os.path.isdir(scss_folder):
+            raise ExtensionError(
+                f"Theme '{theme_name}' get_scss_sources_path() returned "
+                f"non-existent directory: {scss_folder}"
+            )
+        return scss_folder
 
     def finish(self) -> None:
         super().finish()
