@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* **Enhancement**: Add ``simplepdf_build_parallel`` config option to generate PDFs alongside HTML builds via a concurrent subprocess.
+
 Release 1.7
 -----------
 :released: 02.12.2025
