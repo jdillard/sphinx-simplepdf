@@ -226,7 +226,8 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             The modified BeautifulSoup object.
 
         Raises:
-            ExtensionError: If the hook raises an exception or returns an invalid type.
+            ExtensionError: If the hook raises an exception, returns ``None``, or returns a value
+                that is not a ``BeautifulSoup`` instance.
         """
         hook_func = self._load_html_hook()
         if hook_func is None:
@@ -240,10 +241,9 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             raise ExtensionError(f"simplepdf_html_hook raised an exception: {e}") from e
 
         if result is None:
-            logger.warning(
-                "simplepdf_html_hook returned None, using original HTML. The hook should return a BeautifulSoup object."
+            raise ExtensionError(
+                "simplepdf_html_hook returned None. The hook must return a BeautifulSoup object."
             )
-            return soup
 
         if not isinstance(result, BeautifulSoup):
             raise ExtensionError(f"simplepdf_html_hook must return a BeautifulSoup object, got {type(result).__name__}")

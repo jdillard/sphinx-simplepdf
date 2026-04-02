@@ -248,10 +248,3 @@ The ``html_hook`` function must accept two arguments:
 
 The function must return a ``BeautifulSoup`` object.
 
-**Error handling:**
-
-- If the script file is not found, a ``ConfigError`` is raised
-- If the function is not found in the script, a ``ConfigError`` is raised
-- If the hook returns ``None``, a warning is logged and the original HTML is used
-- If the hook returns a non-BeautifulSoup type, an error is raised
-- If the hook raises an exception, it is wrapped in an ``ExtensionError``
