@@ -200,6 +200,9 @@ Path to a Python script that will be called to manipulate the HTML before PDF ge
 The script must define a function named ``html_hook``.
 This allows custom transformations using BeautifulSoup.
 
+.. note:: Only one hook script is supported per build: ``simplepdf_html_hook`` must be a single path.
+   Combine logic inside one script if you need multiple steps.
+
 **Format:** ``"path/to/script.py"``
 
 The path can be absolute or relative to the ``conf.py`` directory.
@@ -247,4 +250,3 @@ The ``html_hook`` function must accept two arguments:
 :app: The Sphinx application instance (provides access to ``config``, ``srcdir``, ``outdir``, etc.)
 
 The function must return a ``BeautifulSoup`` object.
-
