@@ -104,6 +104,12 @@ class _PdfGenerator:
 
 
 def setup(app):
+    # Register builder so it is always available when this extension is loaded,
+    # even without the package's entry point (e.g. editable installs, subprocess builds).
+    from sphinx_simplepdf.builders.simplepdf import setup as _builder_setup
+
+    _builder_setup(app)
+
     app.add_directive("if-builder", IfBuilderDirective)
     app.add_directive("if-include", IfIncludeDirective)
     app.add_directive("pdf-include", PdfIncludeDirective)
