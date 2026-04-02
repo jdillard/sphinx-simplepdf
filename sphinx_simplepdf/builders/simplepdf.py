@@ -204,8 +204,13 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         if not os.path.isfile(script_path):
             raise ConfigError(f"simplepdf_html_hook script not found: {script_path}")
 
-        # Load the module
-        spec = importlib.util.spec_from_file_location("simplepdf_hook", script_path)
+        # Load the module. Use a unique virtual module name so parallel builds
+        # do not share one sys.modules entry for different hook paths.
+        mod_name = f"simplepdf_hook_{id(self)}"
+        spec = importlib.util.spec_from_file_location(mod_name, script_path)
+        if spec is None or spec.loader is None:
+            raise ConfigError(f"Cannot load module from: {script_path}")
+
         module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(module)
