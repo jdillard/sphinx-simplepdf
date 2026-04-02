@@ -1,10 +1,10 @@
-import importlib.util
 from collections import Counter
+from collections.abc import Callable
+import importlib.util
 import os
 import re
 import subprocess
-from collections import Counter
-from typing import Any, Callable
+from typing import Any
 
 from bs4 import BeautifulSoup
 import sass
@@ -198,9 +198,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
 
         # Check if file exists
         if not os.path.isfile(script_path):
-            raise ConfigError(
-                f"simplepdf_html_hook script not found: {script_path}"
-            )
+            raise ConfigError(f"simplepdf_html_hook script not found: {script_path}")
 
         # Load the module
         spec = importlib.util.spec_from_file_location("simplepdf_hook", script_path)
@@ -208,9 +206,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         try:
             spec.loader.exec_module(module)
         except Exception as e:
-            raise ConfigError(
-                f"Error loading simplepdf_html_hook script '{script_path}': {e}"
-            ) from e
+            raise ConfigError(f"Error loading simplepdf_html_hook script '{script_path}': {e}") from e
 
         hook_func = getattr(module, "html_hook", None)
         if not callable(hook_func):
@@ -241,22 +237,16 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         try:
             result = hook_func(soup, self.app)
         except Exception as e:
-            raise ExtensionError(
-                f"simplepdf_html_hook raised an exception: {e}"
-            ) from e
+            raise ExtensionError(f"simplepdf_html_hook raised an exception: {e}") from e
 
         if result is None:
             logger.warning(
-                "simplepdf_html_hook returned None, using original HTML. "
-                "The hook should return a BeautifulSoup object."
+                "simplepdf_html_hook returned None, using original HTML. The hook should return a BeautifulSoup object."
             )
             return soup
 
         if not isinstance(result, BeautifulSoup):
-            raise ExtensionError(
-                f"simplepdf_html_hook must return a BeautifulSoup object, "
-                f"got {type(result).__name__}"
-            )
+            raise ExtensionError(f"simplepdf_html_hook must return a BeautifulSoup object, got {type(result).__name__}")
 
         return result
 
