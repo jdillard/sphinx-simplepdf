@@ -76,6 +76,10 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             },
         )
 
+        self._html_hook_func: Callable[[BeautifulSoup, Sphinx], BeautifulSoup] | None = (
+            self._load_html_hook()
+        )
+
     def get_config_var(self, name, default):
         """
         Gets a config variables for scss out of the Sphinx configuration.
@@ -229,7 +233,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             ExtensionError: If the hook raises an exception, returns ``None``, or returns a value
                 that is not a ``BeautifulSoup`` instance.
         """
-        hook_func = self._load_html_hook()
+        hook_func = self._html_hook_func
         if hook_func is None:
             return soup
 
