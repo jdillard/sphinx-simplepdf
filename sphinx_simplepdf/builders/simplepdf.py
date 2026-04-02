@@ -106,11 +106,10 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         does not define get_scss_sources_path(), or if calling the hook raises.
         """
         theme_name = self.app.config.simplepdf_theme or "simplepdf_theme"
+        fallback_module = importlib.import_module("sphinx_simplepdf.themes.simplepdf_theme")
 
         def bundled_scss_folder():
-            from sphinx_simplepdf.themes.simplepdf_theme import get_scss_sources_path
-
-            return get_scss_sources_path()
+            return fallback_module.get_scss_sources_path()
 
         try:
             # theme_name comes from conf.py; dynamic import is no extra trust boundary vs. Sphinx config.
