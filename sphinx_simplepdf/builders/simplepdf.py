@@ -1,5 +1,5 @@
-import importlib
 from collections import Counter
+import importlib
 import os
 import re
 import subprocess
@@ -103,29 +103,46 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
 
         Imports the theme module and calls its get_scss_sources_path(). Falls
         back to the bundled simplepdf_theme if the theme cannot be imported or
-        does not define get_scss_sources_path().
+        does not define get_scss_sources_path(), or if calling the hook raises.
         """
         theme_name = self.app.config.simplepdf_theme or "simplepdf_theme"
+
+        def bundled_scss_folder():
+            from sphinx_simplepdf.themes.simplepdf_theme import get_scss_sources_path
+
+            return get_scss_sources_path()
+
         try:
             # theme_name comes from conf.py; dynamic import is no extra trust boundary vs. Sphinx config.
             theme_module = importlib.import_module(theme_name)
-            if hasattr(theme_module, "get_scss_sources_path"):
-                return theme_module.get_scss_sources_path()
+        except Exception as exc:
+            logger.warning(
+                f"Could not import theme '{theme_name}' ({type(exc).__name__}: {exc!s}), "
+                "falling back to bundled simplepdf_theme",
+                type="simplepdf",
+                subtype="theme",
+            )
+            return bundled_scss_folder()
+
+        if not hasattr(theme_module, "get_scss_sources_path"):
             logger.warning(
                 f"Theme '{theme_name}' does not define get_scss_sources_path(), "
                 "falling back to bundled simplepdf_theme",
                 type="simplepdf",
                 subtype="theme",
             )
-        except ImportError:
+            return bundled_scss_folder()
+
+        try:
+            return theme_module.get_scss_sources_path()
+        except Exception as exc:
             logger.warning(
-                f"Could not import theme '{theme_name}', "
+                f"Theme '{theme_name}' get_scss_sources_path() failed ({type(exc).__name__}: {exc!s}), "
                 "falling back to bundled simplepdf_theme",
                 type="simplepdf",
                 subtype="theme",
             )
-        from sphinx_simplepdf.themes.simplepdf_theme import get_scss_sources_path
-        return get_scss_sources_path()
+            return bundled_scss_folder()
 
     def finish(self) -> None:
         super().finish()
