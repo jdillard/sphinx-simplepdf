@@ -149,8 +149,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         scss_folder = os.path.abspath(scss_folder)
         if not os.path.isdir(scss_folder):
             raise ExtensionError(
-                f"Theme '{theme_name}' get_scss_sources_path() returned "
-                f"non-existent directory: {scss_folder}"
+                f"Theme '{theme_name}' get_scss_sources_path() returned non-existent directory: {scss_folder}"
             )
         return scss_folder
 
