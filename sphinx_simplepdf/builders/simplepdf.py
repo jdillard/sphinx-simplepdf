@@ -7,6 +7,7 @@ import subprocess
 from typing import Any
 
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 import sass
 from sphinx import __version__
 from sphinx.application import Sphinx
@@ -29,7 +30,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
 
     default_translator_class = SimplepdfTranslator
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if self.app.config.simplepdf_theme is not None:
             logger.info(f"Setting theme to {self.app.config.simplepdf_theme}")
@@ -76,9 +77,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             },
         )
 
-        self._html_hook_func: Callable[[BeautifulSoup, Sphinx], BeautifulSoup] | None = (
-            self._load_html_hook()
-        )
+        self._html_hook_func: Callable[[BeautifulSoup, Sphinx], BeautifulSoup] | None = self._load_html_hook()
 
     def get_config_var(self, name, default):
         """
@@ -250,9 +249,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             raise ExtensionError(f"simplepdf_html_hook raised an exception: {e}") from e
 
         if result is None:
-            raise ExtensionError(
-                "simplepdf_html_hook returned None. The hook must return a BeautifulSoup object."
-            )
+            raise ExtensionError("simplepdf_html_hook returned None. The hook must return a BeautifulSoup object.")
 
         if not isinstance(result, BeautifulSoup):
             raise ExtensionError(f"simplepdf_html_hook must return a BeautifulSoup object, got {type(result).__name__}")
@@ -297,7 +294,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
         sidebar = soup.find("div", class_="sphinxsidebarwrapper")
 
         # sidebar contains the toctree
-        if sidebar is not None:
+        if isinstance(sidebar, Tag):
             toc_links = sidebar.find_all("a", class_="reference internal")
 
             # find max toctree lvl
