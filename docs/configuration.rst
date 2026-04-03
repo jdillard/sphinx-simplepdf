@@ -191,3 +191,17 @@ To reduce output noise the output can be filtered by a list of regular expressio
 ``simplepdf_weasyprint_filter = ["WARNING: Ignored"]``
 
 To suppress all output, the quite flag `-q` should be used.
+
+simplepdf_build_parallel
+------------------------
+
+A boolean value. If set to ``True``, **Sphinx-SimplePDF** will automatically generate a PDF alongside
+your primary build (e.g. HTML). A separate ``sphinx-build -b simplepdf`` subprocess runs concurrently with
+the main build, and only the final PDF is copied into the output directory.
+
+This means you no longer need a dedicated ``simplepdf`` build step — the PDF is produced as a side effect
+of your normal build.
+
+``simplepdf_build_parallel = True``
+
+Default: ``False``
