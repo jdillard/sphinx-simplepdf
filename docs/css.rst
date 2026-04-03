@@ -41,7 +41,7 @@ The default orientation is portrait. To change the page orientation for a side, 
     .. csv-table:: CSV Table
        :file: example.csv
 
-    .. or as alternaitve
+    .. or as alternative
 
     .. container:: break_before ssp-landscape
 
