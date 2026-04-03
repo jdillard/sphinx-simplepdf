@@ -14,10 +14,7 @@ from sphinx.application import Sphinx
 from sphinx.testing.util import SphinxTestApp
 from sphinx.util import logging as sphinx_logging
 
-try:
-    from .imgcompare import compare_pdfs
-except ImportError:
-    compare_pdfs = None
+from .imgcompare import compare_pdfs
 
 pytest_plugins = ("sphinx.testing.fixtures",)
 
