@@ -25,7 +25,7 @@ Workflow
 
    * Fixes toc-tree links
 
-7. Builders starts **weasyprint** with ``index.html`` as input
+7. Builder starts **weasyprint** with ``index.html`` as input
 8. Done, PDF file exists under ``_build/simplepdf``.
 
 DEMO project
