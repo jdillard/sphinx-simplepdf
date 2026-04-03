@@ -46,7 +46,7 @@ Config vars
 :bottom-right-content: Text or css function to display on pdf output.
 
 
-All variables are defined inside ``/themes/sphinx_simplepdf/sttuc/stles/sources/_variables.scss``.
+All variables are defined inside ``sphinx_simplepdf/themes/simplepdf_theme/static/styles/sources/_variables.scss``.
 
 .. hint::
 
@@ -76,7 +76,7 @@ File references
    }
 
 The file path must be relative to the Sphinx _static folder.
-So in the above example the image is stored under ``/_static/cover-bg-jpg``.
+So in the above example the image is stored under ``/_static/cover-bg.jpg``.
 
 SimplePDF docs
 ++++++++++++++
