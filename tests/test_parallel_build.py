@@ -3,8 +3,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from sphinx_simplepdf import _PdfGenerator
 
 
@@ -238,7 +236,6 @@ class TestBuildFinishedIntegration:
         assert gen.build_dir is None
 
 
-@pytest.mark.slow
 class TestParallelBuildEndToEnd:
     """End-to-end test using actual Sphinx build with parallel PDF."""
 
