@@ -21,6 +21,7 @@ class _PdfGenerator:
         self.process = None
         self.build_dir = None
         self.log_path = None
+        self._log_fh = None
 
     def _on_builder_inited(self, app):
         if app.builder.name == "simplepdf":
@@ -50,9 +51,7 @@ class _PdfGenerator:
 
         if self.process.returncode != 0:
             log_hint = f"  see log: {self.log_path}" if self.log_path else ""
-            logger.warning(
-                f"sphinx-simplepdf: PDF build failed (exit {self.process.returncode}){log_hint}"
-            )
+            logger.warning(f"sphinx-simplepdf: PDF build failed (exit {self.process.returncode}){log_hint}")
             self._cleanup()
             return
 
@@ -77,8 +76,8 @@ class _PdfGenerator:
         ]
 
         logger.info("sphinx-simplepdf: starting PDF build subprocess")
-        log_fh = self.log_path.open("w")
-        self.process = subprocess.Popen(cmd, stdout=log_fh, stderr=subprocess.STDOUT)
+        self._log_fh = self.log_path.open("w")
+        self.process = subprocess.Popen(cmd, stdout=self._log_fh, stderr=subprocess.STDOUT)
 
     def _copy_pdf(self, app):
         if self.build_dir is None:
@@ -98,6 +97,11 @@ class _PdfGenerator:
             logger.info(f"sphinx-simplepdf: {pdf.name} -> {target}")
 
     def _cleanup(self):
+        if self._log_fh is not None:
+            try:
+                self._log_fh.close()
+            finally:
+                self._log_fh = None
         if self.build_dir is not None and self.build_dir.exists():
             shutil.rmtree(self.build_dir, ignore_errors=True)
             self.build_dir = None
