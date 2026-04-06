@@ -96,7 +96,29 @@ class _PdfGenerator:
             shutil.copy2(pdf, target)
             logger.info(f"sphinx-simplepdf: {pdf.name} -> {target}")
 
+    def _stop_pdf_subprocess(self):
+        """If the PDF child is still running, stop it before temp dir removal."""
+        proc = self.process
+        if proc is None:
+            return
+        if proc.poll() is not None:
+            self.process = None
+            return
+        logger.info("sphinx-simplepdf: terminating PDF build subprocess (primary build failed)")
+        proc.terminate()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            logger.warning("sphinx-simplepdf: PDF subprocess did not exit after terminate; killing")
+            proc.kill()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                logger.warning("sphinx-simplepdf: PDF subprocess did not respond to kill")
+        self.process = None
+
     def _cleanup(self):
+        self._stop_pdf_subprocess()
         if self._log_fh is not None:
             try:
                 self._log_fh.close()

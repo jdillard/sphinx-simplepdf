@@ -59,6 +59,25 @@ class TestPdfGeneratorSkips:
         gen._on_build_finished(app, RuntimeError("build error"))
         assert gen.build_dir is None
 
+    def test_build_finished_terminates_running_subprocess_on_exception(self, tmp_path):
+        """If the primary build fails, a running PDF subprocess is stopped before cleanup."""
+        app = self._make_app(parallel=True)
+        gen = _PdfGenerator(app)
+        gen.build_dir = tmp_path / "simplepdf_test"
+        gen.build_dir.mkdir()
+
+        proc = MagicMock()
+        proc.poll.return_value = None
+        proc.wait.return_value = None
+        gen.process = proc
+
+        gen._on_build_finished(app, RuntimeError("build error"))
+
+        proc.terminate.assert_called_once()
+        proc.wait.assert_called_once_with(timeout=10)
+        assert gen.process is None
+        assert gen.build_dir is None
+
     def test_build_finished_noop_when_no_process(self):
         """build-finished does nothing if no subprocess was started."""
         app = self._make_app(parallel=True)
