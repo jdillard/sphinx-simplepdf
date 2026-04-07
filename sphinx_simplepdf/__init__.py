@@ -144,6 +144,7 @@ def setup(app):
 
     gen = _PdfGenerator(app)
     app.connect("builder-inited", gen._on_builder_inited)
+    # Sphinx invokes listeners in ascending priority order (default 500); 101 runs before most.
     app.connect("build-finished", gen._on_build_finished, priority=101)
 
     return {
