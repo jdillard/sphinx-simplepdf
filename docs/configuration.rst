@@ -202,6 +202,13 @@ the main build, and only the final PDF is copied into the output directory.
 This means you no longer need a dedicated ``simplepdf`` build step — the PDF is produced as a side effect
 of your normal build.
 
+The PDF subprocess is started with its own arguments (source directory, separate output and doctree
+locations, and ``-q``). **Options you pass only on the parent command line**—for example ``-D``,
+``-A``, ``-t``, ``-c``, or ``-n``—**are not forwarded** to that subprocess. The PDF build therefore
+reads ``conf.py`` (and the environment) like a normal standalone run. If you need the PDF to match
+a one-off CLI invocation, put those settings in ``conf.py`` (or run a separate
+``sphinx-build -b simplepdf`` with the same flags).
+
 ``simplepdf_build_parallel = True``
 
 Default: ``False``
