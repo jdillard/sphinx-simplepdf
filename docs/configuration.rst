@@ -240,6 +240,11 @@ stays close to whichever of the two builds takes longer, not the sum of both.
 
 Then build as usual (for example ``make html`` or ``sphinx-build -M html . _build``).
 
+The PDF copied into the HTML output directory uses the same rules as a normal ``simplepdf`` build:
+:ref:`simplepdf_file_name` if set (the file is taken from the same path under the subprocess output directory),
+otherwise ``<project>.pdf``. Only the file name is placed in the HTML output directory, not any directory
+components from ``simplepdf_file_name``.
+
 The PDF subprocess is started with its own arguments (source directory, separate output and doctree
 locations, and ``-q``). **Options you pass only on the parent command line**—for example ``-D``,
 ``-A``, ``-t``, ``-c``, or ``-n``—**are not forwarded** to that subprocess. The PDF build therefore

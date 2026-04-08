@@ -92,6 +92,8 @@ class TestPdfCopy:
         app = MagicMock()
         app.outdir = str(tmp_path / "html_output")
         Path(app.outdir).mkdir()
+        app.config.simplepdf_file_name = None
+        app.config.project = "MyProject"
 
         gen = _PdfGenerator(app)
         gen.build_dir = tmp_path / "simplepdf_build"
@@ -117,6 +119,8 @@ class TestPdfCopy:
         app = MagicMock()
         app.outdir = str(tmp_path / "html_output")
         Path(app.outdir).mkdir()
+        app.config.simplepdf_file_name = None
+        app.config.project = "Proj"
 
         gen = _PdfGenerator(app)
         gen.build_dir = tmp_path / "simplepdf_build"
@@ -127,7 +131,7 @@ class TestPdfCopy:
         with patch("sphinx_simplepdf.parallel_build.logger") as mock_logger:
             gen._copy_pdf(app)
             mock_logger.warning.assert_called_once()
-            assert "no PDF found" in mock_logger.warning.call_args[0][0]
+            assert "expected PDF not found" in mock_logger.warning.call_args[0][0]
 
     def test_noop_when_no_build_dir(self):
         app = MagicMock()
@@ -135,6 +139,49 @@ class TestPdfCopy:
         gen.build_dir = None
         # Should not raise
         gen._copy_pdf(app)
+
+    def test_copies_to_simplepdf_file_name(self, tmp_path):
+        """Reads PDF from the same path the simplepdf builder uses; flattens into HTML outdir."""
+        app = MagicMock()
+        app.outdir = str(tmp_path / "html_output")
+        Path(app.outdir).mkdir()
+        app.config.simplepdf_file_name = "docs/handbook.pdf"
+        app.config.project = "Ignored"
+
+        gen = _PdfGenerator(app)
+        gen.build_dir = tmp_path / "simplepdf_build"
+        output = gen.build_dir / "output"
+        nested = output / "docs"
+        nested.mkdir(parents=True)
+        (nested / "handbook.pdf").write_bytes(b"%PDF-fake")
+
+        gen._copy_pdf(app)
+
+        dest = Path(app.outdir)
+        assert (dest / "handbook.pdf").exists()
+        assert not (dest / "Ignored.pdf").exists()
+
+    def test_wrong_pdf_name_logs_warning(self, tmp_path):
+        """Only the configured output path is used; other PDFs are ignored."""
+        app = MagicMock()
+        app.outdir = str(tmp_path / "html_output")
+        Path(app.outdir).mkdir()
+        app.config.simplepdf_file_name = None
+        app.config.project = "ReleaseNotes"
+
+        gen = _PdfGenerator(app)
+        gen.build_dir = tmp_path / "simplepdf_build"
+        output = gen.build_dir / "output"
+        output.mkdir(parents=True)
+        (output / "unexpected.pdf").write_bytes(b"%PDF-x")
+
+        with patch("sphinx_simplepdf.parallel_build.logger") as mock_logger:
+            gen._copy_pdf(app)
+
+        mock_logger.warning.assert_called_once()
+        assert "expected PDF not found" in mock_logger.warning.call_args[0][0]
+        assert not (Path(app.outdir) / "ReleaseNotes.pdf").exists()
+        assert not (Path(app.outdir) / "unexpected.pdf").exists()
 
 
 class TestCleanup:
@@ -194,6 +241,8 @@ class TestBuildFinishedIntegration:
         app = MagicMock()
         app.builder.name = "html"
         app.config.simplepdf_build_parallel = True
+        app.config.simplepdf_file_name = None
+        app.config.project = "Test"
         app.outdir = str(tmp_path / "html_output")
         Path(app.outdir).mkdir()
 
@@ -218,6 +267,8 @@ class TestBuildFinishedIntegration:
         app = MagicMock()
         app.builder.name = "html"
         app.config.simplepdf_build_parallel = True
+        app.config.simplepdf_file_name = None
+        app.config.project = "Test"
         app.outdir = str(tmp_path / "html_output")
         Path(app.outdir).mkdir()
 

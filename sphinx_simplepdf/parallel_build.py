@@ -11,6 +11,22 @@ from sphinx.util import logging
 logger = logging.getLogger(__name__)
 
 
+def _configured_pdf_source(app, output_dir: Path) -> Path:
+    """Path to the PDF under the simplepdf build output (matches the simplepdf builder)."""
+    raw = app.config.simplepdf_file_name
+    if raw:
+        return output_dir / Path(str(raw))
+    return output_dir / f"{app.config.project}.pdf"
+
+
+def _configured_pdf_dest(app, html_outdir: Path) -> Path:
+    """Destination path under the HTML output directory (flat basename, like a normal artifact)."""
+    raw = app.config.simplepdf_file_name
+    if raw:
+        return html_outdir / Path(str(raw)).name
+    return html_outdir / f"{app.config.project}.pdf"
+
+
 class _PdfGenerator:
     """Manages an optional parallel simplepdf subprocess build."""
 
@@ -82,17 +98,16 @@ class _PdfGenerator:
             return
 
         output_dir = self.build_dir / "output"
-        pdf_files = list(output_dir.glob("*.pdf"))
+        html_out = Path(app.outdir)
+        expected_path = _configured_pdf_source(app, output_dir)
+        target = _configured_pdf_dest(app, html_out)
 
-        if not pdf_files:
-            logger.warning("sphinx-simplepdf: no PDF found in build output")
+        if expected_path.is_file():
+            shutil.copy2(expected_path, target)
+            logger.info(f"sphinx-simplepdf: {expected_path.name} -> {target}")
             return
 
-        dest = Path(app.outdir)
-        for pdf in pdf_files:
-            target = dest / pdf.name
-            shutil.copy2(pdf, target)
-            logger.info(f"sphinx-simplepdf: {pdf.name} -> {target}")
+        logger.warning("sphinx-simplepdf: expected PDF not found at %s", expected_path)
 
     def _stop_pdf_subprocess(self):
         """If the PDF child is still running, stop it before temp dir removal."""
