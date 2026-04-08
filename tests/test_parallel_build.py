@@ -3,7 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from sphinx_simplepdf import _PdfGenerator
+from sphinx_simplepdf.parallel_build import _PdfGenerator
 
 
 class TestPdfGeneratorSkips:
@@ -124,7 +124,7 @@ class TestPdfCopy:
         output.mkdir(parents=True)
         # No PDF file created
 
-        with patch("sphinx_simplepdf.logger") as mock_logger:
+        with patch("sphinx_simplepdf.parallel_build.logger") as mock_logger:
             gen._copy_pdf(app)
             mock_logger.warning.assert_called_once()
             assert "no PDF found" in mock_logger.warning.call_args[0][0]
@@ -168,7 +168,7 @@ class TestStartSubprocess:
 
         gen = _PdfGenerator(app)
 
-        with patch("sphinx_simplepdf.subprocess.Popen") as mock_popen:
+        with patch("sphinx_simplepdf.parallel_build.subprocess.Popen") as mock_popen:
             mock_popen.return_value = MagicMock()
             gen._start_subprocess(app)
 
