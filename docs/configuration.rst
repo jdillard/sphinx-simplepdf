@@ -223,6 +223,7 @@ To suppress all output, the quite flag `-q` should be used.
 
 simplepdf_parallel_build
 ------------------------
+.. versionadded:: Unreleased
 
 A boolean value. If set to ``True``, a PDF is generated alongside your primary build when that build is one of Sphinx’s built-in HTML site builders.
 Other builders (for example ``latex`` or ``epub``) are unchanged; use a separate ``sphinx-build -b simplepdf`` run if you need a PDF from those workflows.
