@@ -5,8 +5,8 @@ from sphinx_simplepdf.parallel_build import register as register_parallel_build
 
 
 def setup(app):
-    # Register builder so it is always available when this extension is loaded,
-    # even without the package's entry point (e.g. editable installs, subprocess builds).
+    # Register simplepdf config and builder on every build: Sphinx loads this extension
+    # for all builders, but only loads builders/simplepdf.py automatically for -b simplepdf.
     from sphinx_simplepdf.builders.simplepdf import setup as _builder_setup
 
     _builder_setup(app)
