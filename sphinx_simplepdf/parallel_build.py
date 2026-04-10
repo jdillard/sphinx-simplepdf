@@ -98,7 +98,12 @@ class _PdfGenerator:
 
         logger.info("sphinx-simplepdf: starting PDF build subprocess")
         self._log_fh = self.log_path.open("w")
-        self.process = subprocess.Popen(cmd, stdout=self._log_fh, stderr=subprocess.STDOUT)
+        self.process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.DEVNULL,
+            stdout=self._log_fh,
+            stderr=subprocess.STDOUT,
+        )
 
     def _copy_pdf(self, app):
         if self.build_dir is None:
