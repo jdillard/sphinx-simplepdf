@@ -10,6 +10,13 @@ from sphinx.util import logging
 
 logger = logging.getLogger(__name__)
 
+# Standard HTML-site builders only; simplepdf is omitted so it never nests another simplepdf run.
+_PARALLEL_PDF_HTML_BUILDERS = frozenset({"html", "dirhtml", "singlehtml"})
+
+
+def _parallel_pdf_runs_for_builder(app) -> bool:
+    return app.builder.name in _PARALLEL_PDF_HTML_BUILDERS
+
 
 def _configured_pdf_source(app, output_dir: Path) -> Path:
     """Path to the PDF under the simplepdf build output (matches the simplepdf builder)."""
@@ -38,17 +45,17 @@ class _PdfGenerator:
         self._log_fh = None
 
     def _on_builder_inited(self, app):
-        if app.builder.name == "simplepdf":
-            return
         if not app.config.simplepdf_build_parallel:
+            return
+        if not _parallel_pdf_runs_for_builder(app):
             return
 
         self._start_subprocess(app)
 
     def _on_build_finished(self, app, exception):
-        if app.builder.name == "simplepdf":
-            return
         if not app.config.simplepdf_build_parallel:
+            return
+        if not _parallel_pdf_runs_for_builder(app):
             return
 
         if exception:

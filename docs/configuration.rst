@@ -224,13 +224,10 @@ To suppress all output, the quite flag `-q` should be used.
 simplepdf_build_parallel
 ------------------------
 
-A boolean value. If set to ``True``, **Sphinx-SimplePDF** will automatically generate a PDF alongside
-your primary build (e.g. HTML). A separate ``sphinx-build -b simplepdf`` subprocess runs concurrently with
-the main build, and only the final PDF is copied into the HTML output directory alongside the generated HTML files.
+A boolean value. If set to ``True``, a PDF is generated alongside your primary build when that build is one of Sphinx’s built-in HTML site builders.
+Other builders (for example ``latex`` or ``epub``) are unchanged; use a separate ``sphinx-build -b simplepdf`` run if you need a PDF from those workflows.
 
-This means you no longer need a dedicated ``simplepdf`` build step — the PDF is produced as a side effect
-of your normal build. Because the PDF build runs in parallel with the main builder, overall wall-clock time
-stays close to whichever of the two builds takes longer, not the sum of both.
+This means you no longer need a dedicated ``simplepdf`` build step — the PDF is produced as a side effect of your normal build. Because the PDF build runs in parallel with the main builder, overall wall-clock time stays close to whichever of the two builds takes longer, not the sum of both.
 
 **Example** — in ``conf.py``:
 

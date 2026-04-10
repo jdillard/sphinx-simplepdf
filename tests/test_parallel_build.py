@@ -3,6 +3,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from sphinx_simplepdf.parallel_build import _PdfGenerator
 
 
@@ -18,11 +20,30 @@ class TestPdfGeneratorSkips:
         return app
 
     def test_builder_inited_skips_simplepdf_builder(self):
-        """No subprocess when the current builder IS simplepdf."""
+        """No subprocess when the current builder IS simplepdf (not an HTML site builder)."""
         app = self._make_app(builder_name="simplepdf", parallel=True)
         gen = _PdfGenerator(app)
         gen._on_builder_inited(app)
         assert gen.process is None
+
+    def test_builder_inited_skips_non_html_builder(self):
+        """No subprocess for builders outside html / dirhtml / singlehtml."""
+        app = self._make_app(builder_name="latex", parallel=True)
+        gen = _PdfGenerator(app)
+        gen._on_builder_inited(app)
+        assert gen.process is None
+
+    @pytest.mark.parametrize("builder_name", ["html", "dirhtml", "singlehtml"])
+    def test_builder_inited_starts_subprocess_for_html_family(self, builder_name, tmp_path):
+        app = self._make_app(builder_name=builder_name, parallel=True)
+        app.srcdir = str(tmp_path / "src")
+        Path(app.srcdir).mkdir()
+        gen = _PdfGenerator(app)
+        with patch("sphinx_simplepdf.parallel_build.subprocess.Popen") as mock_popen:
+            mock_popen.return_value = MagicMock()
+            gen._on_builder_inited(app)
+        mock_popen.assert_called_once()
+        gen._cleanup()
 
     def test_builder_inited_skips_when_disabled(self):
         """No subprocess when simplepdf_build_parallel is False."""
@@ -38,6 +59,15 @@ class TestPdfGeneratorSkips:
         # Should not raise or do anything
         gen._on_build_finished(app, None)
         assert gen.build_dir is None
+
+    def test_build_finished_skips_non_html_builder(self):
+        """build-finished ignores parallel PDF when the primary builder is not HTML-site."""
+        app = self._make_app(builder_name="latex", parallel=True)
+        gen = _PdfGenerator(app)
+        proc = MagicMock()
+        gen.process = proc
+        gen._on_build_finished(app, None)
+        proc.wait.assert_not_called()
 
     def test_build_finished_skips_when_disabled(self):
         """build-finished is a no-op when parallel is disabled."""
