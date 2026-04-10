@@ -219,9 +219,9 @@ To reduce output noise the output can be filtered by a list of regular expressio
 
 To suppress all output, the quite flag `-q` should be used.
 
-.. _simplepdf_build_parallel:
+.. _simplepdf_parallel_build:
 
-simplepdf_build_parallel
+simplepdf_parallel_build
 ------------------------
 
 A boolean value. If set to ``True``, a PDF is generated alongside your primary build when that build is one of Sphinx’s built-in HTML site builders.
@@ -233,7 +233,7 @@ This means you no longer need a dedicated ``simplepdf`` build step — the PDF i
 
 .. code-block:: python
 
-   simplepdf_build_parallel = True
+   simplepdf_parallel_build = True
 
 Then build as usual (for example ``make html`` or ``sphinx-build -M html . _build``).
 

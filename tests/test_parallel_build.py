@@ -14,7 +14,7 @@ class TestPdfGeneratorSkips:
     def _make_app(self, builder_name="html", parallel=True):
         app = MagicMock()
         app.builder.name = builder_name
-        app.config.simplepdf_build_parallel = parallel
+        app.config.simplepdf_parallel_build = parallel
         app.srcdir = "/tmp/src"
         app.outdir = "/tmp/out"
         return app
@@ -46,7 +46,7 @@ class TestPdfGeneratorSkips:
         gen._cleanup()
 
     def test_builder_inited_skips_when_disabled(self):
-        """No subprocess when simplepdf_build_parallel is False."""
+        """No subprocess when simplepdf_parallel_build is False."""
         app = self._make_app(parallel=False)
         gen = _PdfGenerator(app)
         gen._on_builder_inited(app)
@@ -270,7 +270,7 @@ class TestBuildFinishedIntegration:
     def test_successful_subprocess_copies_pdf(self, tmp_path):
         app = MagicMock()
         app.builder.name = "html"
-        app.config.simplepdf_build_parallel = True
+        app.config.simplepdf_parallel_build = True
         app.config.simplepdf_file_name = None
         app.config.project = "Test"
         app.outdir = str(tmp_path / "html_output")
@@ -296,7 +296,7 @@ class TestBuildFinishedIntegration:
     def test_failed_subprocess_cleans_up(self, tmp_path):
         app = MagicMock()
         app.builder.name = "html"
-        app.config.simplepdf_build_parallel = True
+        app.config.simplepdf_parallel_build = True
         app.config.simplepdf_file_name = None
         app.config.project = "Test"
         app.outdir = str(tmp_path / "html_output")
@@ -321,11 +321,11 @@ class TestParallelBuildEndToEnd:
     """End-to-end test using actual Sphinx build with parallel PDF."""
 
     def test_parallel_build_produces_pdf_in_html_output(self, sphinx_build, capsys):
-        """Build as HTML with simplepdf_build_parallel=True and verify PDF appears."""
+        """Build as HTML with simplepdf_parallel_build=True and verify PDF appears."""
         result = sphinx_build(
             buildername="html",
             srcdir="basic_doc",
-            confoverrides={"simplepdf_build_parallel": True},
+            confoverrides={"simplepdf_parallel_build": True},
         ).build()
 
         captured = capsys.readouterr()
@@ -344,7 +344,7 @@ class TestParallelBuildEndToEnd:
         result = sphinx_build(
             buildername="html",
             srcdir="basic_doc",
-            confoverrides={"simplepdf_build_parallel": False},
+            confoverrides={"simplepdf_parallel_build": False},
         ).build()
 
         pdf_files = list(result.outdir.glob("*.pdf"))

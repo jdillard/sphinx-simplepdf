@@ -10,4 +10,4 @@ or for more control::
   sphinx-build -M simplepdf . _build
 
 .. note:: To produce a PDF during ``html``, ``dirhtml``, or ``singlehtml`` builds (for example ``make html``), enable
-   :ref:`simplepdf_build_parallel` in :doc:`configuration`.
+   :ref:`simplepdf_parallel_build` in :doc:`configuration`.

@@ -45,7 +45,7 @@ class _PdfGenerator:
         self._log_fh = None
 
     def _on_builder_inited(self, app):
-        if not app.config.simplepdf_build_parallel:
+        if not app.config.simplepdf_parallel_build:
             return
         if not _parallel_pdf_runs_for_builder(app):
             return
@@ -53,7 +53,7 @@ class _PdfGenerator:
         self._start_subprocess(app)
 
     def _on_build_finished(self, app, exception):
-        if not app.config.simplepdf_build_parallel:
+        if not app.config.simplepdf_parallel_build:
             return
         if not _parallel_pdf_runs_for_builder(app):
             return
@@ -151,7 +151,7 @@ class _PdfGenerator:
 
 def register(app):
     """Register config and Sphinx event hooks for parallel PDF builds."""
-    app.add_config_value("simplepdf_build_parallel", False, "env", types=[bool])
+    app.add_config_value("simplepdf_parallel_build", False, "env", types=[bool])
 
     gen = _PdfGenerator(app)
     app.connect("builder-inited", gen._on_builder_inited)
