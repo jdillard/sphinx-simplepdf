@@ -149,8 +149,9 @@ class _PdfGenerator:
                 self._log_fh.close()
             finally:
                 self._log_fh = None
-        if self.build_dir is not None and self.build_dir.exists():
-            shutil.rmtree(self.build_dir, ignore_errors=True)
+        if self.build_dir is not None:
+            if self.build_dir.exists():
+                shutil.rmtree(self.build_dir, ignore_errors=True)
             self.build_dir = None
 
 

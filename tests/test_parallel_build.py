@@ -228,6 +228,17 @@ class TestCleanup:
         assert gen.build_dir is None
         assert not (tmp_path / "simplepdf_cleanup").exists()
 
+    def test_clears_build_dir_when_path_already_removed(self, tmp_path):
+        """Stale build_dir pointing at a deleted directory should still be cleared."""
+        app = MagicMock()
+        gen = _PdfGenerator(app)
+        gone = tmp_path / "already_removed"
+        gen.build_dir = gone
+        assert not gone.exists()
+
+        gen._cleanup()
+        assert gen.build_dir is None
+
     def test_noop_when_no_build_dir(self):
         app = MagicMock()
         gen = _PdfGenerator(app)
