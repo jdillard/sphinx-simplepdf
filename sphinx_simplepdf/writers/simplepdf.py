@@ -13,10 +13,10 @@ class SimplepdfTranslator(HTML5Translator):
             return node["secnumber"]
 
         if isinstance(node.parent, nodes.section):
-            docname = self.docnames[-1]
-            anchorname = "{}/#{}".format(docname, node.parent["ids"][0])
+            parent_ids = node.parent.get("ids")
+            anchorname = parent_ids[0] if parent_ids else None
             if anchorname not in self.builder.secnumbers:
-                anchorname = f"{docname}/"  # try first heading which has no anchor
+                anchorname = f"/{self.docnames[-1]}/"
 
             if self.builder.secnumbers.get(anchorname):
                 return self.builder.secnumbers[anchorname]
@@ -40,7 +40,7 @@ class SimplepdfTranslator(HTML5Translator):
             logger.warning(msg, location=node)
             return None
 
-        key = f"{self.docnames[-1]}/{figtype}"
+        key = f"/{self.docnames[-1]}/#{figtype}"
         figure_id = node["ids"][0]
         if figure_id not in self.builder.fignumbers.get(key, {}):
             return None
