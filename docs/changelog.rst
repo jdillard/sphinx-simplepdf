@@ -4,6 +4,9 @@ Changelog
 Unreleased
 ----------
 
+* **Bugfix** [#120] Prefix section ``id`` and ``refid`` values with docname in merged
+  ``simplepdf`` HTML so sidebar TOC page numbers resolve uniquely (aligned with
+  `sphinx-doc/sphinx#13739 <https://github.com/sphinx-doc/sphinx/pull/13739>`_).
 * **Bugfix** [#134] Improve support for external theme packages by using a ``get_scss_sources_path()`` convention.
 
   - If needed, theme warnings can be suppressed via ``suppress_warnings = ["simplepdf.theme"]``.

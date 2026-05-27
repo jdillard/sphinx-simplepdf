@@ -6,6 +6,7 @@ import subprocess
 from typing import Any
 
 from bs4 import BeautifulSoup
+from docutils import nodes
 import sass
 from sphinx import __version__
 from sphinx.application import Sphinx
@@ -152,6 +153,76 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
                 f"Theme '{theme_name}' get_scss_sources_path() returned non-existent directory: {scss_folder}"
             )
         return scss_folder
+
+    @staticmethod
+    def _qualified_anchor_id(docname: str, node_id: str) -> str:
+        """Build a docname-qualified section anchor (sphinx-doc/sphinx#13739)."""
+        return f"/{docname}/#{node_id}"
+
+    def fix_refuris(self, tree: nodes.Node) -> None:
+        """Keep docname-qualified section anchors; only strip legacy double-hash URIs."""
+        for refnode in tree.findall(nodes.reference):
+            if "refuri" not in refnode:
+                continue
+            refuri = refnode["refuri"]
+            if re.match(r"^#/[^#]+/#", refuri):
+                continue
+            hashindex = refuri.find("#")
+            if hashindex < 0:
+                continue
+            hashindex = refuri.find("#", hashindex + 1)
+            if hashindex >= 0:
+                refnode["refuri"] = refuri[hashindex:]
+
+    def ensure_fully_qualified_refids(self, tree: nodes.document) -> None:
+        """Prefix refids and ids with docname so merged single-page HTML has unique anchors."""
+        for node in tree.findall(nodes.Element):
+            if "refid" not in node and "ids" not in node:
+                continue
+            document = node.document
+            if document is None or "source" not in document:
+                continue
+            docname = self.env.path2doc(document["source"])
+            if docname is None:
+                continue
+            if "refid" in node:
+                node["refid"] = self._qualified_anchor_id(docname, node["refid"])
+                if "refuri" in node and node["refuri"].startswith("#"):
+                    node["refuri"] = "#" + node["refid"]
+            if "ids" in node:
+                node["ids"] = [self._qualified_anchor_id(docname, node_id) for node_id in node["ids"]]
+
+    def assemble_doctree(self) -> nodes.document:
+        tree = super().assemble_doctree()
+        self.ensure_fully_qualified_refids(tree)
+        return tree
+
+    def assemble_toc_secnumbers(self) -> dict[str, dict[str, tuple[int, ...]]]:
+        new_secnumbers: dict[str, tuple[int, ...]] = {}
+        for docname, secnums in self.env.toc_secnumbers.items():
+            for id_, secnum in secnums.items():
+                alias = f"/{docname}/{id_}"
+                new_secnumbers[alias] = secnum
+
+        return {self.config.root_doc: new_secnumbers}
+
+    def assemble_toc_fignumbers(
+        self,
+    ) -> dict[str, dict[str, dict[str, tuple[int, ...]]]]:
+        new_fignumbers: dict[str, dict[str, tuple[int, ...]]] = {}
+        for docname, fignumlist in self.env.toc_fignumbers.items():
+            for figtype, fignums in fignumlist.items():
+                alias = f"/{docname}/#{figtype}"
+                new_fignumbers.setdefault(alias, {})
+                for id_, fignum in fignums.items():
+                    new_fignumbers[alias][self._qualified_anchor_id(docname, id_)] = fignum
+
+        return {self.config.root_doc: new_fignumbers}
+
+    def get_target_uri(self, docname: str, typ: str | None = None) -> str:
+        if docname in self.env.all_docs:
+            return f"#/{docname}/"
+        return docname + self.out_suffix
 
     def finish(self) -> None:
         super().finish()
