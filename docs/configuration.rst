@@ -207,7 +207,6 @@ Additional options for the theme. The default theme ``simplepdf_theme`` inherits
 
 :nocover: Do not display cover pages (front and back cover)
 
-
 simplepdf_weasyprint_filter
 ---------------------------
 .. versionadded:: 1.6
@@ -218,3 +217,129 @@ To reduce output noise the output can be filtered by a list of regular expressio
 ``simplepdf_weasyprint_filter = ["WARNING: Ignored"]``
 
 To suppress all output, the quiet flag `-q` should be used.
+
+.. _theme_pdf_html_hooks:
+
+Theme PDF HTML hooks
+--------------------
+
+PDF themes may define ``apply_pdf_html_hooks(soup, app)`` on their Python package
+module (the module named by ``simplepdf_theme``, same convention as
+``get_scss_sources_path()``). The builder calls it after ``_toctree_fix`` and
+before any optional :ref:`simplepdf_html_hook`. Themes that omit this function
+are unchanged.
+
+SimplePDF calls **one** entry point on the theme package. Themes with several
+transforms should keep that function on the package ``__init__.py`` and
+implement the steps in a ``hooks/`` subpackage. **Order is the call order** in
+your orchestrator function (not configured separately).
+
+**Recommended package layout:**
+
+.. code-block:: text
+
+   my_pdf_theme/
+     __init__.py          # SimplePDF entry point: get_scss_sources_path(), apply_pdf_html_hooks()
+     theme.conf
+     hooks/
+       __init__.py        # optional; transforms wired in via import from __init__.py above
+
+**Theme package entry point (``my_pdf_theme/__init__.py``):**
+
+.. code-block:: python
+
+   from os import path
+
+   # hooks/ is optional organization; SimplePDF does not scan it.
+   # Wire transforms in via a normal Python import.
+   from my_pdf_theme.hooks import apply_layout_hooks
+
+   def get_scss_sources_path():
+       return path.join(path.abspath(path.dirname(__file__)), "static", "styles", "sources")
+
+   # SimplePDF imports ``simplepdf_theme`` and calls this function by name.
+   # No path in conf.py — this must live on the theme package module.
+   def apply_pdf_html_hooks(soup, app):
+       return apply_layout_hooks(soup, app)
+
+**Hook implementations (``my_pdf_theme/hooks/__init__.py``):**
+
+.. code-block:: python
+
+   from bs4 import BeautifulSoup
+
+   # Called from apply_pdf_html_hooks above; run order is call order here.
+   def apply_layout_hooks(soup: BeautifulSoup, app) -> BeautifulSoup:
+       normalize_toc(soup)
+       fix_empty_span_anchors(soup)
+       return soup
+
+   def normalize_toc(soup: BeautifulSoup) -> None:
+       ...
+
+   def fix_empty_span_anchors(soup: BeautifulSoup) -> None:
+       ...
+
+Split steps into separate modules (for example ``hooks/toc.py``, ``hooks/tables.py``)
+when a file grows large, but keep **one orchestrator** in ``hooks/__init__.py`` (or
+another module re-exported from there) that defines run order.
+
+simplepdf_html_hook
+-------------------
+.. _simplepdf_html_hook:
+.. versionadded:: 1.7
+
+Path to a Python script that will be called to manipulate the HTML before PDF
+generation, *after* any :ref:`theme_pdf_html_hooks` and ``_toctree_fix``.
+The script must define a function named ``html_hook``.
+
+.. note:: Only one hook script is supported per build: ``simplepdf_html_hook`` must be a single path.
+   Combine logic inside one script if you need multiple steps.
+
+**Format:** ``"path/to/script.py"``
+
+The path can be absolute or relative to the ``conf.py`` directory.
+
+**Example conf.py:**
+
+.. code-block:: python
+
+   simplepdf_html_hook = "./hooks/pdf_hook.py"
+
+**Example hook script (hooks/pdf_hook.py):**
+
+.. code-block:: python
+
+   from bs4 import BeautifulSoup
+
+   def html_hook(soup, app):
+       """
+       Customize HTML before PDF generation.
+
+       Args:
+           soup: BeautifulSoup object with parsed HTML
+           app: Sphinx application instance
+       Returns:
+           Modified BeautifulSoup object
+       """
+       # Example: Remove navigation elements
+       for nav in soup.find_all("nav"):
+           nav.decompose()
+
+       # Example: Add watermark
+       watermark = soup.new_tag("div", attrs={"class": "watermark"})
+       watermark.string = "DRAFT"
+       body = soup.find("body")
+       if body:
+           body.insert(0, watermark)
+
+       return soup
+
+**Function signature:**
+
+The ``html_hook`` function must accept two arguments:
+
+:soup: A ``BeautifulSoup`` object containing the parsed HTML
+:app: The Sphinx application instance (provides access to ``config``, ``srcdir``, ``outdir``, etc.)
+
+The function must return a ``BeautifulSoup`` object.
