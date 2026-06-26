@@ -168,6 +168,7 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
 
         soup = BeautifulSoup(index_html, "html.parser")
         soup = self._toctree_fix(soup)
+        soup = self._run_theme_pdf_hooks(soup)
         soup = self._execute_html_hook(soup)
         new_index_html = str(soup)
 
@@ -270,6 +271,45 @@ class SimplePdfBuilder(SingleFileHTMLBuilder):
             )
 
         return hook_func
+
+    def _run_theme_pdf_hooks(self, soup: BeautifulSoup) -> BeautifulSoup:
+        """Apply optional ``apply_pdf_html_hooks`` from the configured theme module."""
+        theme_name = self.config.simplepdf_theme or "simplepdf_theme"
+
+        try:
+            theme_module = importlib.import_module(theme_name)
+        except Exception as exc:
+            logger.warning(
+                f"Could not import theme '{theme_name}' for PDF HTML hooks "
+                f"({type(exc).__name__}: {exc!s}); skipping theme hooks",
+                type="simplepdf",
+                subtype="theme",
+            )
+            return soup
+
+        hook_func = getattr(theme_module, "apply_pdf_html_hooks", None)
+        if not callable(hook_func):
+            return soup
+
+        logger.info(f"Executing theme PDF HTML hooks from '{theme_name}'")
+
+        try:
+            result = hook_func(soup, self.app)
+        except Exception as e:
+            raise ExtensionError(f"Theme '{theme_name}' apply_pdf_html_hooks raised an exception: {e}") from e
+
+        if result is None:
+            raise ExtensionError(
+                f"Theme '{theme_name}' apply_pdf_html_hooks returned None. The hook must return a BeautifulSoup object."
+            )
+
+        if not isinstance(result, BeautifulSoup):
+            raise ExtensionError(
+                f"Theme '{theme_name}' apply_pdf_html_hooks must return a BeautifulSoup object, "
+                f"got {type(result).__name__}"
+            )
+
+        return result
 
     def _execute_html_hook(self, soup: BeautifulSoup) -> BeautifulSoup:
         """Execute the user-defined HTML hook if configured.

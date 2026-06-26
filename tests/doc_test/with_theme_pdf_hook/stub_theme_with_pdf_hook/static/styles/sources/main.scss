@@ -1,0 +1,6 @@
+$primary: #2a4b8d;
+
+body::before {
+    content: "sphinx-simplepdf-test-theme-pdf-hook-marker";
+    display: none;
+}

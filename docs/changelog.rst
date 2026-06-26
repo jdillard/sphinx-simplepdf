@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * **Enhancement**: Add the ability to configure an :ref:`simplepdf_html_hook` to modify the HTML before PDF generation.
+* **Enhancement**: PDF themes may define ``apply_pdf_html_hooks`` to add html hooks in a theme-specific way.
 * **Bugfix** [#134] Improve support for external theme packages by using a ``get_scss_sources_path()`` convention.
 
   - If needed, theme warnings can be suppressed via ``suppress_warnings = ["simplepdf.theme"]``.
